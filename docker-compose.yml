@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: morshed-db
+    environment:
+      POSTGRES_USER: morshed
+      POSTGRES_PASSWORD: morshed123
+      POSTGRES_DB: morsheddb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: morshed-backend
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgres://morshed:morshed123@db:5432/morsheddb
+      ENV: dev
+      ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+
+volumes:
+  db_data:
+
+
