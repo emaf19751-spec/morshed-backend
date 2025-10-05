@@ -1,35 +1,25 @@
-import os
-import requests
+import os, json
+from openai import OpenAI
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+def ask_gpt(prompt: str):
+    """Fallback call to GPT-5 to generate structured JSON response"""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return {"error": "OPENAI_API_KEY not set", "causes": ["Unknown"], "advice": "Setup key in Render"}
 
-def ask_gpt(prompt: str) -> str:
-    """
-    Fallback GPT-5 answer generator.
-    """
-    if not OPENAI_API_KEY:
-        return "AI service not configured yet. Please check server settings."
+    client = OpenAI(api_key=api_key)
+    completion = client.chat.completions.create(
+        model="gpt-5",
+        messages=[
+            {"role": "system", "content": "You are an automotive assistant for car diagnostics."},
+            {"role": "user", "content": prompt}
+        ],
+        response_format={"type": "json_object"}
+    )
 
     try:
-        response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {OPENAI_API_KEY}"
-            },
-            json={
-                "model": "gpt-5",
-                "messages": [
-                    {"role": "system", "content": "You are an expert auto mechanic assistant named Morshed."},
-                    {"role": "user", "content": prompt}
-                ],
-                "max_tokens": 300
-            },
-            timeout=20
-        )
+        return json.loads(completion.choices[0].message.content)
+    except Exception:
+        return {"causes": ["Unknown"], "advice": "Consult a professional mechanic."}
 
-        data = response.json()
-        return data.get("choices", [{}])[0].get("message", {}).get("content", "").strip() or "No response from AI."
-    except Exception as e:
-        return f"Error contacting GPT-5: {e}"
 
