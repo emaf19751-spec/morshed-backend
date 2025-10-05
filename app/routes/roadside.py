@@ -18,13 +18,13 @@ class RoadsideRequest(BaseModel):
 def roadside_request(req: RoadsideRequest, request: Request):
     try:
         # Always store in DB
-        conn = psycopg2.connect(
-            host="db",
-            port="5432",
-            user="morshed",
-            password="morshed123",
-            dbname="morsheddb"
-        )
+        import os
+import psycopg2
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+conn = psycopg2.connect(DATABASE_URL)
+
         cur = conn.cursor()
         cur.execute(
             """
