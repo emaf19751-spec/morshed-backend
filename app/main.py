@@ -68,13 +68,19 @@ def llm_check():
 @app.get("/db-check")
 def db_check():
     try:
-        conn = psycopg2.connect(
-            host="db",
-            port="5432",
-            user="morshed",
-            password="morshed123",
-            dbname="morsheddb"
-        )
+       import os
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+@app.get("/db-check")
+def db_check():
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.close()
+        return {"status": "ok", "message": "Connected to Render PostgreSQL successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
         conn.close()
         return {"status": "ok", "message": "Database connected successfully"}
     except Exception as e:
