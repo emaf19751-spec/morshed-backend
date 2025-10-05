@@ -5,18 +5,13 @@ from app.routes import diagnose, roadside
 import psycopg2
 import os
 
-# ----------------------------
-# Initialize FastAPI
-# ----------------------------
-app = FastAPI(title="Morshed Auto Backend")
+app = FastAPI(title="Morshed Auto API")
 
-# ----------------------------
-# CORS
-# ----------------------------
+# Allow your Netlify frontend + local dev
 origins = [
-    "https://morshedauto.netlify.app",  # production frontend
-    "http://localhost:5173",            # local dev
-    "http://127.0.0.1:5500"
+    "https://morshedauto.netlify.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5500",
 ]
 
 app.add_middleware(
@@ -28,26 +23,27 @@ app.add_middleware(
 )
 
 # ----------------------------
-# Health Check
+# Health Check Endpoint
 # ----------------------------
 @app.get("/health")
 def health():
     return {"status": "ok", "time": datetime.utcnow().isoformat()}
 
 # ----------------------------
-# DB Connection Check
+# Database Connection Test
 # ----------------------------
 @app.get("/db-check")
 def db_check():
-    """Checks Render PostgreSQL connection"""
     try:
-        DATABASE_URL = os.getenv("DATABASE_URL")
-        if not DATABASE_URL:
-            return {"status": "error", "message": "DATABASE_URL not found in environment"}
-
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT", "5432"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            dbname=os.getenv("DB_NAME")
+        )
         conn.close()
-        return {"status": "ok", "message": "Connected to PostgreSQL successfully"}
+        return {"status": "ok", "message": "Database connected successfully"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -56,6 +52,3 @@ def db_check():
 # ----------------------------
 app.include_router(diagnose.router)
 app.include_router(roadside.router)
-
-
-
